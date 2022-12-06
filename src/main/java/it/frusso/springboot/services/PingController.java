@@ -1,5 +1,6 @@
 package it.frusso.springboot.services;
 
+import java.io.InputStream;
 import java.util.Date;
 import java.util.Properties;
 
@@ -19,37 +20,37 @@ import org.springframework.web.bind.annotation.RestController;
 public class PingController {
 
 
+	/**
+	 * Restituisce la data attuale per verificare che il servizio e' attivo
+	 * @return
+	 */
 	@RequestMapping(method = RequestMethod.GET, name = "ping", path = "/api/ping", produces = MediaType.APPLICATION_JSON_VALUE )
 	public String pingInfo() {
-		AboutBean res = new AboutBean();
 		String info = new java.util.Date().toString();
 		return info;
 	}
 	
+	/**
+	 * Restituisce delle informazioni di 'about' prelevandole dal file di configurazione 'about.properties' presente nel classpath
+	 * In ottica di CI/CD il file di properties può essere manipolato in fase di build per rispecchiare le ultime configurazione o l'ambiente 
+	 * in cui gira il servizio.
+	 */
 	@RequestMapping(method = RequestMethod.GET, name = "info", path = "/api/about", produces = MediaType.APPLICATION_JSON_VALUE )
 	public Properties aboutInfo() {
 		Properties p = new Properties();
+		try {
+			InputStream is = getClass().getResourceAsStream("/about.properties");
+			if (is != null) p.load(is);
+			is.close();
+		} catch (Exception e) {
+			System.err.println("Error loading file from classpath: " + e.getMessage());
+		}
+		
+		// Aggiunge il timestamp e la data attuale
 		p.put("timestamp", "" + System.currentTimeMillis());
 		p.put("date", new Date().toString());
+		
 		return p;
 	}
-
 	
-	public class AboutBean {
-		private long timestamp = 0;
-		private String printable = "";
-		
-		public AboutBean() {
-			Date d = new Date();
-			timestamp = d.getTime();
-			printable = d.toString();
-		}
-
-		// Remember to implements getter and setter to avoid the error
-		// "No converter found for return value of type: ....."
-		public long getTimestamp() { return timestamp; }
-		public void setTimestamp(long timestamp) { this.timestamp = timestamp;	}
-		public String getPrintable() { 	return printable; }
-		public void setPrintable(String printable) { this.printable = printable; }
-	}
 }
