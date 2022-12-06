@@ -5,11 +5,12 @@ import java.util.Date;
 import java.util.Properties;
 
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.Mapping;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import it.frusso.springboot.StringResponse;
 
 /**
  * Controller per l'esposizione del servizio di test
@@ -24,10 +25,10 @@ public class PingController {
 	 * Restituisce la data attuale per verificare che il servizio e' attivo
 	 * @return
 	 */
-	@RequestMapping(method = RequestMethod.GET, name = "ping", path = "/api/ping", produces = MediaType.APPLICATION_JSON_VALUE )
-	public String pingInfo() {
+	@RequestMapping(method = RequestMethod.GET, path = "/api/ping", produces = MediaType.APPLICATION_JSON_VALUE )
+	public StringResponse pingInfo() {
 		String info = new java.util.Date().toString();
-		return info;
+		return new StringResponse(info);
 	}
 	
 	/**
@@ -35,7 +36,7 @@ public class PingController {
 	 * In ottica di CI/CD il file di properties può essere manipolato in fase di build per rispecchiare le ultime configurazione o l'ambiente 
 	 * in cui gira il servizio.
 	 */
-	@RequestMapping(method = RequestMethod.GET, name = "info", path = "/api/about", produces = MediaType.APPLICATION_JSON_VALUE )
+	@RequestMapping(method = RequestMethod.GET, path = "/api/about", produces = MediaType.APPLICATION_JSON_VALUE )
 	public Properties aboutInfo() {
 		Properties p = new Properties();
 		try {
