@@ -1,0 +1,13 @@
+
+<it:call xmlns:it="http://it.groupama.nexusws">
+    <arg0>
+        <serviceHeader>
+            <serviceName>${serviceName}</serviceName>
+            <messageId>0</messageId>
+            <paramList>
+                <param name="userName" value="${userName}"/>
+            </paramList>
+        </serviceHeader>
+        <xmlMessage>${xmlMessage}</xmlMessage>
+    </arg0>
+</it:call>

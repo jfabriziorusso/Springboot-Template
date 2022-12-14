@@ -62,7 +62,7 @@ public class XProperties implements Serializable {
 					pInStream.close();
 				}
 			} catch (Exception e) {
-				System.err.println("Error loading " +resourceName + " from classpath: " + e.getMessage());
+				System.err.println("Error loading " + resourceName + " from classpath: " + e.getMessage());
 			}
 		}
 	}

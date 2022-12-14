@@ -2,18 +2,17 @@ package it.frusso.springboot.services;
 
 import java.io.InputStream;
 import java.util.Date;
-import java.util.Map.Entry;
 import java.util.Properties;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.tags.Tags;
-import it.frusso.springboot.StringResponse;
 
 /**
  * Controller per l'esposizione del servizio di test
@@ -32,9 +31,9 @@ public class PingController {
 	 * @return
 	 */
 	@RequestMapping(method = RequestMethod.GET, path = "/api/ping", produces = MediaType.APPLICATION_JSON_VALUE )
-	public StringResponse pingInfo() {
+	public ResponseEntity<String> pingInfo() {
 		String info = new java.util.Date().toString();
-		return new StringResponse(info);
+		return new ResponseEntity<String>(info, HttpStatus.OK);
 	}
 	
 	/**
@@ -64,6 +63,13 @@ public class PingController {
 		res.put("date", new Date().toString());
 		
 		return res;
+	}
+	
+	
+	@RequestMapping(method = RequestMethod.GET, path="/api/foos/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> getFooById(@PathVariable String id) {
+	   String res = "ID: " + id;
+	   return new ResponseEntity<String>(res, HttpStatus.OK);
 	}
 	
 }
