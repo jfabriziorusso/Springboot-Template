@@ -61,16 +61,12 @@ public class NexusWSController {
 			nexusSoapRequest = FileHelper.readTextFile(in);
 			in.close();
 			logger.info("Loaded file 'nexusSoapRequest.xml' as soap templare request for NEUXS");
+			
 			nexusConfig.loadFromResource("/nexusConfig.properties");
-			logger.info("Loaded nexus config properties");
-			logger.info(nexusConfig.toString());
+			logger.info("Loaded nexus config properties: " + nexusConfig.toString());
 		} catch (Exception e) {
 			logger.error("Error loading xml template: " + e.getMessage());
 		}
-	}
-	
-	static {
-		
 	}
 	
 	
