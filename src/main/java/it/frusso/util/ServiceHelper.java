@@ -4,9 +4,12 @@ package it.frusso.util;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.http.Consts;
 import org.apache.http.Header;
@@ -171,6 +174,15 @@ public class ServiceHelper {
 		}
 		
 		public String getEndpoint() { return endpoint; }
+		
+		public ServiceRequest addAllHeaders(HttpServletRequest httpServletRequest) {
+			Enumeration<String> headerNames = httpServletRequest.getHeaderNames();
+			while (headerNames.hasMoreElements()) {
+				String hKey = headerNames.nextElement();
+				headerParams.put(hKey, httpServletRequest.getHeader(hKey));
+			}
+			return this;
+		}
 		
 		public ServiceRequest addHeader(String key, String value) {
 			headerParams.put(key, value);

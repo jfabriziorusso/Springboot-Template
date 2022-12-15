@@ -1,6 +1,7 @@
 package it.frusso.springboot.services;
 
 import java.io.InputStream;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -39,7 +40,7 @@ public class NexusWSController {
 	
 	private String nexusSoapRequest = "";
 	private XProperties nexusConfig = new XProperties();
-	
+	private UUID uuid = UUID.randomUUID();
 	
 	// Insieme dei servizi esposti da nexus (ognuno richiaa il metodo callNexus() 
 	
@@ -60,7 +61,7 @@ public class NexusWSController {
 			InputStream in = NexusWSController.class.getResourceAsStream("/nexusSoapRequest.xml");
 			nexusSoapRequest = FileHelper.readTextFile(in);
 			in.close();
-			logger.info("Loaded file 'nexusSoapRequest.xml' as soap templare request for NEUXS");
+			logger.info("Loaded file 'nexusSoapRequest.xml' as soap template request for NEUXS");
 			
 			nexusConfig.loadFromResource("/nexusConfig.properties");
 			logger.info("Loaded nexus config properties: " + nexusConfig.toString());
@@ -73,9 +74,14 @@ public class NexusWSController {
 	private ResponseEntity<String> callNexus(
 			final HttpServletRequest httpServletRequest, final String body) {
 		
+		String transactionId = getTransactionId(httpServletRequest);
+		
+		
 		// Recupera il nome del servizio come ultima parte del path
 		String requestUri = httpServletRequest.getRequestURI();
 		String serviceName = requestUri.substring(1+ requestUri.lastIndexOf("/"));
+		
+		logger.debug(transactionId + " - Starting request for service " + requestUri);
 		
 		HttpStatus httpStatusResult = HttpStatus.OK;
 		
@@ -86,13 +92,17 @@ public class NexusWSController {
 		String xml = null;
 		if (body == null || body.isEmpty()) {
 			httpStatusResult = HttpStatus.BAD_REQUEST;
-			xml = makeErrorResponse(httpServletRequest, 404, "Bad Request - payload empty");
+			String errorMessage = "Bad Request - payload empty";
+			xml = makeErrorResponse(httpServletRequest, 404, errorMessage);
+			logger.debug(transactionId + " - Error: " + errorMessage);
 			return new ResponseEntity<String>(xml, httpStatusResult);
 		}
 		
 		if (userName == null || userName.isEmpty()) {
 			httpStatusResult = HttpStatus.PROXY_AUTHENTICATION_REQUIRED;
-			xml = makeErrorResponse(httpServletRequest, 407, "ProxyAuthenticationRequired - Empty or not valid userName");
+			String errorMessage = "ProxyAuthenticationRequired - Empty or not valid userName";
+			xml = makeErrorResponse(httpServletRequest, 407, errorMessage);
+			logger.debug(transactionId + " - Error: " + errorMessage);
 			return new ResponseEntity<String>(xml, httpStatusResult);
 		}
 		
@@ -109,6 +119,7 @@ public class NexusWSController {
 		// Effettua la chiamata a Nexus
 		ServiceHelper serviceHelper = new ServiceHelper();
 		ServiceRequest serviceRequest = new ServiceRequest();
+		serviceRequest.addAllHeaders(httpServletRequest); // Riporta tutti gli header al backend
 		serviceRequest.addHeader("SAOPAction", "uri:call");
 		serviceRequest.setContentType(ServiceHelper.CONTENT_TYPE_playText);
 		serviceRequest.setEndpoint(nexusConfig.getAsString("nexusws.backendURL"));
@@ -121,26 +132,43 @@ public class NexusWSController {
 			if (serviceResponse == null) throw new RuntimeException("Empty response from nexus");
 		} catch (Exception e) {
 			httpStatusResult = HttpStatus.INTERNAL_SERVER_ERROR;
-			xml = makeErrorResponse(httpServletRequest, 500, "Internal Proxy Error - Error calling backend : " + e.getMessage());
-			logger.error("Error calling Nexus: Internal Proxy Error - " + e.getMessage());
+			
+			String errorMessage = "Internal Proxy Error - Error calling backend : " + e.getMessage();
+			xml = makeErrorResponse(httpServletRequest, 407, errorMessage);
+			logger.debug(transactionId + " - Error: " + errorMessage);
+			xml = makeErrorResponse(httpServletRequest, 500, errorMessage);
 			return new ResponseEntity<String>(xml, httpStatusResult);
 		}
+		
 		long timeB = System.currentTimeMillis();
 		long nexusTimeMillis = (timeB - timeA);
-		
-		logger.debug("Nexus called service " + serviceName + " in " + nexusTimeMillis + "ms");
+		logger.debug(transactionId + " - Nexus called service " + serviceName + " in " + nexusTimeMillis + "ms");
+
 		int statusCode = serviceResponse.getStatusCode();
 		String nexusResponse = serviceResponse.getResponseBody();
 		
-		if (statusCode != HttpStatus.OK.ordinal()) {
-			xml = makeErrorResponse(httpServletRequest, statusCode, "Nexus Error - Nexus response statusCode = " + statusCode);
+		if (statusCode != 200) {
+			String errorMessage = "Nexus Error - Nexus response statusCode = " + statusCode;
+			xml = makeErrorResponse(httpServletRequest, statusCode, errorMessage);
+			logger.debug(transactionId + " - Error: " + errorMessage);
 			return new ResponseEntity<String>(xml, httpStatusResult);
 		}
 		
 		xml = nexusResponse;
+		logger.debug(transactionId + " - Responding to client with statusCode : " + httpStatusResult.toString());
+		
 		return new ResponseEntity<String>(xml, httpStatusResult);
 	}
 	
+	private String getTransactionId(HttpServletRequest httpServletRequest) {
+		String transactioIdHeaderName = nexusConfig.getAsString("transactioIdHeaderName");
+		String res = httpServletRequest.getHeader(transactioIdHeaderName);
+		if (res == null) res = httpServletRequest.getHeader("activityId");
+		if (res == null) res = httpServletRequest.getHeader("x-transaction");
+		if (res == null) res = uuid.toString();
+		return res;
+	}
+
 	/*
 	 * Costruisce il messaggio di errore di risposta al client
 	 */
@@ -153,6 +181,7 @@ public class NexusWSController {
 		sb.append("\t<errorCode>" + errorDescription + "</errorCode>");
 		sb.append("\n</proxyResult>");
 		sb.append("\n</xml>");
+		
 		return sb.toString();
 	}
 }
