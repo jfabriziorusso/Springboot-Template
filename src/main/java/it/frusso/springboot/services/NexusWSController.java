@@ -42,7 +42,6 @@ public class NexusWSController {
 	
 	private String nexusSoapRequest = "";
 	private XProperties nexusConfig = new XProperties();
-	private UUID uuid = UUID.randomUUID();
 	
 	// Insieme dei servizi esposti da nexus (ognuno richiaa il metodo callNexus() 
 	
@@ -168,7 +167,7 @@ public class NexusWSController {
 		String res = httpServletRequest.getHeader(transactioIdHeaderName);
 		if (res == null) res = httpServletRequest.getHeader("activityId");
 		if (res == null) res = httpServletRequest.getHeader("x-transaction");
-		if (res == null) res = uuid.toString();
+		if (res == null) res = UUID.randomUUID().toString();
 		return res;
 	}
 
