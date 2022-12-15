@@ -1,19 +1,21 @@
 package it.frusso.springboot.services;
 
 import java.io.InputStream;
+import java.util.Properties;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.text.StringEscapeUtils;
-import org.slf4j.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -53,6 +55,7 @@ public class NexusWSController {
 	public ResponseEntity<String> infoAgenzia(HttpServletRequest httpServletRequest, @RequestBody(required = false) String body) {
 		return callNexus(httpServletRequest, body);
 	}
+	
 	
 	// --------------------------------------------------------------------
 	
@@ -184,4 +187,24 @@ public class NexusWSController {
 		
 		return sb.toString();
 	}
+	
+	
+	/*
+	 * Servizi di amministrazione e controllo
+	 * Questi servizi non devono essere esposti al pubblico ma servono solo
+	 * per verica dello stato di configurazione del sistema
+	 */
+	
+	// Restituisce il file di configurazione di nexus
+	@RequestMapping(method = RequestMethod.GET, path="/admin/getRuntimeConfig", produces = MediaType.APPLICATION_JSON_VALUE)
+	public Properties adminGetRuntimeConfig(HttpServletRequest httpServletRequest) {
+		return nexusConfig.exportToProperties(false);
+	}
+	
+	// Restituisce il template usato per effettuare le chiamate a nexus
+	@RequestMapping(method = RequestMethod.GET, path="/admin/getCallTemplate", produces = MediaType.APPLICATION_XML_VALUE)
+	public ResponseEntity<String> adminGetCallTemplate(HttpServletRequest httpServletRequest) {
+		return new ResponseEntity<String>(nexusSoapRequest, HttpStatus.OK);
+	}
+		
 }
