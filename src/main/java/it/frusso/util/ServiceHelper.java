@@ -26,6 +26,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.Logger;
+import org.yaml.snakeyaml.util.UriEncoder;
 
 
 public class ServiceHelper {
@@ -55,14 +56,16 @@ public class ServiceHelper {
 		
 		if (request.httpParams != null)	{
 			for(String hKey : request.httpParams.keySet()) {
-				builder.addParameter(hKey, request.httpParams.get(hKey));
+				String paramValue = request.httpParams.get(hKey);
+				//paramValue = UriEncoder.encode(paramValue);
+				builder.addParameter(hKey, paramValue);
 				if (traceMode) System.out.println(" - httpParameter: " + hKey + " = " + request.httpParams.get(hKey));
 			}
 		}
 
 		HttpClient httpClient = HttpClientBuilder.create().build();
-//		final String finalUrl = builder.build().toString();
-		HttpGet httpMethod = new HttpGet(url);
+		final String finalUrl = builder.build().toString();
+		HttpGet httpMethod = new HttpGet(finalUrl);
 		
 		if (request.headerParams != null)	{
 			for(String hKey : request.headerParams.keySet()) {
